@@ -56,6 +56,13 @@ export interface WebpackFunctionProps extends FunctionOptions {
    * @default - true
    */
   readonly ensureUniqueBuildPath?: boolean;
+
+  /**
+   * Skip the webpack build. Useful for CI/CD pipelines with separate package and deployment steps
+   *
+   * @default - false
+   */
+  readonly skipBuild?: boolean;
 }
 
 export interface WebpackSingletonFunctionProps extends WebpackFunctionProps {
@@ -120,14 +127,21 @@ function preProcess(props: WebpackFunctionProps) {
     ? createUniquePath(buildDir, props.entry)
     : buildDir;
   const outputBasename = basename(props.entry, extname(props.entry));
+  const skipBuild =
+    typeof props.skipBuild === "boolean"
+      ? props.skipBuild
+      : false;
 
-  // Build with webpack
-  const builder = new Builder({
-    entry: resolve(props.entry),
-    output: resolve(join(handlerDir, outputBasename + ".js")),
-    config: resolve(props.config),
-  });
-  builder.build();
+  if (!skipBuild) {
+    // Build with webpack
+    const builder = new Builder({
+      entry: resolve(props.entry),
+      output: resolve(join(handlerDir, outputBasename + ".js")),
+      config: resolve(props.config),
+    });
+    builder.build();
+  }
+
   return { runtime, handlerDir, outputBasename, handler };
 }
 
