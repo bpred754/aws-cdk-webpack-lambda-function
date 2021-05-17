@@ -107,6 +107,12 @@ Control whether the build output is placed in a unique directory (sha256 hash) o
 
 default: true
 
+### skipBuild: boolean
+
+Skip the webpack build. Useful for CI/CD pipelines with separate package and deployment steps
+
+default: false
+
 ### ...other options
 
 All other properties of lambda.Function are supported, see also the [AWS Lambda construct library](https://github.com/aws/aws-cdk/tree/master/packages/%40aws-cdk/aws-lambda).

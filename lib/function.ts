@@ -104,16 +104,21 @@ export class WebpackSingletonFunction extends SingletonFunction {
 }
 
 function preProcess(props: WebpackFunctionProps) {
+  const skipBuild =
+    typeof props.skipBuild === "boolean"
+      ? props.skipBuild
+      : false;
+
   if (props.runtime && props.runtime.family !== RuntimeFamily.NODEJS) {
     throw new Error("Only `NODEJS` runtimes are supported.");
   }
   if (!/\.(js|ts)$/.test(props.entry)) {
     throw new Error("Only JavaScript or TypeScript entry files are supported.");
   }
-  if (!existsSync(props.entry)) {
+  if (!skipBuild && !existsSync(props.entry)) {
     throw new Error(`Cannot find entry file at ${props.entry}`);
   }
-  if (!existsSync(props.config)) {
+  if (!skipBuild && !existsSync(props.config)) {
     throw new Error(`Cannot find webpack config file at ${props.config}`);
   }
   const handler = props.handler || "handler";
@@ -127,19 +132,20 @@ function preProcess(props: WebpackFunctionProps) {
     ? createUniquePath(buildDir, props.entry)
     : buildDir;
   const outputBasename = basename(props.entry, extname(props.entry));
-  const skipBuild =
-    typeof props.skipBuild === "boolean"
-      ? props.skipBuild
-      : false;
 
+  const outFile: string = join(handlerDir, outputBasename + ".js");
   if (!skipBuild) {
     // Build with webpack
     const builder = new Builder({
       entry: resolve(props.entry),
-      output: resolve(join(handlerDir, outputBasename + ".js")),
+      output: resolve(outFile),
       config: resolve(props.config),
     });
     builder.build();
+  } else {
+    if (!existsSync(outFile)) {
+      throw new Error(`Cannot find built file at ${outFile}`)
+    }
   }
 
   return { runtime, handlerDir, outputBasename, handler };
